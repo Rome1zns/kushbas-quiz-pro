@@ -57,6 +57,12 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        quiz: {
+          red: "hsl(var(--quiz-red))",
+          blue: "hsl(var(--quiz-blue))",
+          yellow: "hsl(var(--quiz-yellow))",
+          green: "hsl(var(--quiz-green))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -87,5 +93,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 } satisfies Config;

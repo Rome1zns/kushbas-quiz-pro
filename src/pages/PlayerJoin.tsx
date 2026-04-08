@@ -22,10 +22,11 @@ const PlayerJoin = () => {
       return;
     }
     setLoading(true);
+    const trimmedPin = pin.trim();
     const { data, error } = await supabase
       .from("games")
       .select()
-      .eq("pin", pin)
+      .eq("pin", trimmedPin)
       .single();
     setLoading(false);
 

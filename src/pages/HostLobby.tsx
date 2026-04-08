@@ -33,8 +33,19 @@ const HostLobby = () => {
         }
       )
       .subscribe();
+    // Load existing players in case any joined before subscription connected
+    loadPlayers(game.id);
     return () => { supabase.removeChannel(channel); };
   }, [game?.id]);
+
+  const loadPlayers = async (gameId: string) => {
+    const { data } = await supabase
+      .from("players")
+      .select()
+      .eq("game_id", gameId)
+      .order("joined_at");
+    if (data) setPlayers(data);
+  };
 
   const createGame = async () => {
     const pin = generatePin();
@@ -45,9 +56,11 @@ const HostLobby = () => {
       .single();
     if (error) {
       toast.error("Ойын құру кезінде қате пайда болды");
+      setLoading(false);
       return;
     }
     setGame(data);
+    await loadPlayers(data.id);
     setLoading(false);
   };
 
@@ -56,10 +69,14 @@ const HostLobby = () => {
       toast.error("Кем дегенде 1 ойыншы қосылуы керек");
       return;
     }
-    await supabase
+    const { error } = await supabase
       .from("games")
       .update({ status: "active", current_question: 1 })
       .eq("id", game.id);
+    if (error) {
+      toast.error("Ойынды бастау мүмкін болмады");
+      return;
+    }
     navigate(`/host/game/${game.id}`);
   };
 

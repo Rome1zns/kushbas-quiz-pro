@@ -44,14 +44,13 @@ const PlayerGame = () => {
             // New question
             setAnswered(false);
             setSelectedAnswer(null);
-            setIsCorrect(null);
             questionStartRef.current = Date.now();
           }
         }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [gameId, game?.current_question]);
+  }, [gameId]);
 
   // Global 30-second timer synced with host
   useEffect(() => {

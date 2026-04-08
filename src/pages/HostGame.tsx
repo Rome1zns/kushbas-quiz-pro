@@ -40,7 +40,13 @@ const HostGame = () => {
         { event: "INSERT", schema: "public", table: "answers" },
         (payload) => {
           const newAnswer = payload.new as Answer;
-          setAnswers((prev) => [...prev, newAnswer]);
+          // Only include answers from players in this game
+          setAnswers((prev) => {
+            if (players.some(p => p.id === newAnswer.player_id)) {
+              return [...prev, newAnswer];
+            }
+            return prev;
+          });
         }
       )
       .subscribe();

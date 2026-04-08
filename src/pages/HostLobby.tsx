@@ -34,7 +34,7 @@ const HostLobby = () => {
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [game]);
+  }, [game?.id]);
 
   const createGame = async () => {
     const pin = generatePin();

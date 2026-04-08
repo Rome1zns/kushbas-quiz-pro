@@ -17,6 +17,7 @@ const HostGame = () => {
   const [timeLeft, setTimeLeft] = useState(TOTAL_QUIZ_SECONDS);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const advanceIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const quizStartedRef = useRef(false);
 
   const currentQuestion = questions.find(
@@ -48,7 +49,7 @@ const HostGame = () => {
 
   // Global 30-second timer for entire quiz
   useEffect(() => {
-    if (!game || game.status !== "active") return;
+    if (!game || game.status !== "active" || questions.length === 0) return;
 
     if (!quizStartedRef.current) {
       quizStartedRef.current = true;
@@ -56,12 +57,14 @@ const HostGame = () => {
     }
 
     setTimeLeft(TOTAL_QUIZ_SECONDS);
-    const secPerQuestion = Math.floor(TOTAL_QUIZ_SECONDS / questions.length);
+    const secPerQuestion = Math.max(1, Math.floor(TOTAL_QUIZ_SECONDS / questions.length));
+    let questionAdvanceCount = 0;
 
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
+          if (advanceIntervalRef.current) clearInterval(advanceIntervalRef.current);
           quizStartedRef.current = false;
           soundManager.stopBackgroundMusic();
           finishQuiz();
@@ -73,19 +76,18 @@ const HostGame = () => {
     }, 1000);
 
     // Auto-advance question every secPerQuestion seconds
-    let questionAdvanceCount = 0;
-    const advanceInterval = setInterval(() => {
+    advanceIntervalRef.current = setInterval(async () => {
       questionAdvanceCount++;
       if (questionAdvanceCount > questions.length - 1) {
-        clearInterval(advanceInterval);
+        if (advanceIntervalRef.current) clearInterval(advanceIntervalRef.current);
         return;
       }
-      autoAdvanceQuestion();
+      await autoAdvanceQuestion();
     }, secPerQuestion * 1000);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-      clearInterval(advanceInterval);
+      if (advanceIntervalRef.current) clearInterval(advanceIntervalRef.current);
     };
   }, [game?.status, questions.length]);
 

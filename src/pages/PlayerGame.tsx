@@ -55,7 +55,7 @@ const PlayerGame = () => {
 
   // Global 30-second timer synced with host
   useEffect(() => {
-    if (!game || game.status !== "active" || answered) return;
+    if (!game || game.status !== "active" || answered || questions.length === 0) return;
 
     if (!quizStartedRef.current) {
       quizStartedRef.current = true;
@@ -63,7 +63,7 @@ const PlayerGame = () => {
     }
 
     setTimeLeft(TOTAL_QUIZ_SECONDS);
-    const questionWindowMs = (TOTAL_QUIZ_SECONDS / questions.length) * 1000;
+    const questionWindowMs = Math.max(1000, (TOTAL_QUIZ_SECONDS / questions.length) * 1000);
     questionStartRef.current = Date.now();
 
     timerRef.current = setInterval(() => {
@@ -82,7 +82,7 @@ const PlayerGame = () => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [game?.status, questions.length]);
+  }, [game?.status, questions.length, answered]);
 
   const loadGame = async () => {
     const { data } = await supabase

@@ -4,7 +4,7 @@ import { CheckCircle, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { soundManager } from "@/lib/sounds";
 import { calculateScore } from "@/lib/game-utils";
-import { ANSWER_COLORS, QUESTION_TIME_SECONDS, INDICATOR_LABELS } from "@/lib/game-types";
+import { ANSWER_COLORS, TOTAL_QUIZ_SECONDS, INDICATOR_LABELS } from "@/lib/game-types";
 import type { Game, Question } from "@/lib/game-types";
 import PlayerResults from "@/components/game/PlayerResults";
 
@@ -13,11 +13,11 @@ const PlayerGame = () => {
   const [game, setGame] = useState<Game | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answered, setAnswered] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(QUESTION_TIME_SECONDS);
+  const [timeLeft, setTimeLeft] = useState(TOTAL_QUIZ_SECONDS);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const questionStartRef = useRef<number>(Date.now());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const quizStartedRef = useRef(false);
 
   const currentQuestion = questions.find(
     (q) => q.order_num === game?.current_question
@@ -53,17 +53,25 @@ const PlayerGame = () => {
     return () => { supabase.removeChannel(channel); };
   }, [gameId, game?.current_question]);
 
-  // Timer
+  // Global 30-second timer synced with host
   useEffect(() => {
     if (!game || game.status !== "active" || answered) return;
-    setTimeLeft(QUESTION_TIME_SECONDS);
+
+    if (!quizStartedRef.current) {
+      quizStartedRef.current = true;
+      soundManager.startBackgroundMusic();
+    }
+
+    setTimeLeft(TOTAL_QUIZ_SECONDS);
+    const questionWindowMs = (TOTAL_QUIZ_SECONDS / questions.length) * 1000;
     questionStartRef.current = Date.now();
 
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
-          setAnswered(true);
+          quizStartedRef.current = false;
+          soundManager.stopBackgroundMusic();
           return 0;
         }
         if (prev <= 5) soundManager.countdown();
@@ -74,7 +82,7 @@ const PlayerGame = () => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [game?.current_question, answered]);
+  }, [game?.status, questions.length]);
 
   const loadGame = async () => {
     const { data } = await supabase
@@ -100,13 +108,12 @@ const PlayerGame = () => {
     if (timerRef.current) clearInterval(timerRef.current);
 
     const timeTaken = Date.now() - questionStartRef.current;
-    const timeRemaining = QUESTION_TIME_SECONDS * 1000 - timeTaken;
-    const correct = optionIndex === currentQuestion.correct_answer;
-    setIsCorrect(correct);
-    const score = calculateScore(timeRemaining, correct);
+    const questionWindowMs = (TOTAL_QUIZ_SECONDS / questions.length) * 1000;
+    const timeRemaining = questionWindowMs - timeTaken;
+    const score = calculateScore(timeRemaining, questionWindowMs);
 
-    if (correct) soundManager.correct();
-    else soundManager.incorrect();
+    // All answers get a neutral "received" sound
+    soundManager.tick();
 
     // Save answer
     await supabase.from("answers").insert({
@@ -117,19 +124,17 @@ const PlayerGame = () => {
       score_earned: score,
     });
 
-    // Update player total score
-    if (score > 0) {
-      const { data: player } = await supabase
+    // Update player total score (always, regardless of answer choice)
+    const { data: player } = await supabase
+      .from("players")
+      .select("total_score")
+      .eq("id", playerId)
+      .single();
+    if (player) {
+      await supabase
         .from("players")
-        .select("total_score")
-        .eq("id", playerId)
-        .single();
-      if (player) {
-        await supabase
-          .from("players")
-          .update({ total_score: player.total_score + score })
-          .eq("id", playerId);
-      }
+        .update({ total_score: player.total_score + score })
+        .eq("id", playerId);
     }
   };
 
@@ -176,9 +181,9 @@ const PlayerGame = () => {
       {answered ? (
         /* Answered state */
         <div className="flex flex-1 flex-col items-center justify-center gap-4">
-          <CheckCircle className={`h-20 w-20 ${isCorrect ? "text-quiz-green" : "text-destructive"}`} />
+          <CheckCircle className="h-20 w-20 text-primary" />
           <h2 className="text-2xl font-bold">
-            {isCorrect ? "Дұрыс! ✅" : "Қате ❌"}
+            Жауабыңыз қабылданды ✓
           </h2>
           <p className="text-muted-foreground">Келесі сұрақты күтіңіз...</p>
         </div>

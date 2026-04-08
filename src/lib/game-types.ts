@@ -27,6 +27,5 @@ export const ANSWER_COLORS = [
   { bg: "bg-quiz-green", hover: "hover:bg-quiz-green/80", icon: "square", label: "D" },
 ];
 
-export const QUESTION_TIME_SECONDS = 20;
+export const TOTAL_QUIZ_SECONDS = 30;
 export const MAX_SCORE_PER_QUESTION = 1000;
-export const LEADERBOARD_DISPLAY_SECONDS = 5;

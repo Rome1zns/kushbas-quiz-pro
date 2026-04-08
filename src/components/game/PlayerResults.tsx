@@ -83,7 +83,7 @@ const PlayerResults = ({ gameId, playerId, questions }: Props) => {
         {/* Header */}
         <div className="mb-6 text-center">
           <Crown className="mx-auto mb-2 h-10 w-10 text-primary" />
-          <h1 className="text-2xl font-bold">Сіздің нәтижеңіз</h1>
+          <h1 className="text-2xl font-bold">Сіздің пікіріңіз</h1>
         </div>
 
         {/* Score card */}
@@ -133,22 +133,22 @@ const PlayerResults = ({ gameId, playerId, questions }: Props) => {
           ))}
         </div>
 
-        {/* Personal insight */}
+        {/* Personal insight - opinion-based messaging */}
         <div className="rounded-2xl bg-card p-4">
           <p className="text-sm leading-relaxed">
-            Сіздің ең күшті көрсеткішіңіз:{" "}
+            Сіз бұл бағыттарда білсендісіз:{" "}
             <strong className="text-primary">{top2[0]?.label}</strong>
             {top2[1] && (
               <>
                 {" "}және <strong className="text-primary">{top2[1]?.label}</strong>
               </>
             )}
-            . Дамытуды қажет ететін бағыт:{" "}
+            . Осы бағытта тереңдете аласыз:{" "}
             <strong className="text-destructive">{weakest?.label}</strong>.
           </p>
           <p className="mt-3 rounded-lg bg-secondary p-3 text-sm italic">
             «Мен өз басқарушылық қызметімде{" "}
-            <strong>{weakest?.label}</strong> бағытын дамытамын.»
+            <strong>{weakest?.label}</strong> бағытында өндіктіме назар аударамын.»
           </p>
         </div>
       </div>

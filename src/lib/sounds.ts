@@ -1,6 +1,9 @@
 class SoundManager {
   private audioContext: AudioContext | null = null;
   private enabled = true;
+  private backgroundMusicOsc: OscillatorNode | null = null;
+  private backgroundMusicGain: GainNode | null = null;
+  private backgroundMusicTimeouts: NodeJS.Timeout[] = [];
 
   private getContext(): AudioContext {
     if (!this.audioContext) {
@@ -59,6 +62,61 @@ class SoundManager {
 
   countdown() {
     this.playTone(440, 0.1, "square", 0.15);
+  }
+
+  startBackgroundMusic() {
+    if (!this.enabled || this.backgroundMusicOsc) return;
+    try {
+      const ctx = this.getContext();
+      this.backgroundMusicGain = ctx.createGain();
+      this.backgroundMusicGain.gain.setValueAtTime(0.08, ctx.currentTime);
+      this.backgroundMusicGain.connect(ctx.destination);
+
+      // Simple 4-bar melody loop: ascending/descending pattern at ~120 BPM
+      const playMelody = () => {
+        if (!this.backgroundMusicGain || !this.enabled) return;
+        const frequencies = [262, 294, 330, 349, 392, 349, 330, 294]; // C D E F G F E D
+        const noteDuration = 0.25; // 250ms per note = 240 BPM (4 beats per second)
+
+        frequencies.forEach((freq, i) => {
+          const timeout = setTimeout(() => {
+            if (!this.backgroundMusicGain || !this.enabled) return;
+            const osc = ctx.createOscillator();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            const noteGain = ctx.createGain();
+            noteGain.gain.setValueAtTime(0.05, ctx.currentTime);
+            noteGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + noteDuration);
+            osc.connect(noteGain);
+            noteGain.connect(this.backgroundMusicGain!);
+            osc.start();
+            osc.stop(ctx.currentTime + noteDuration);
+          }, i * noteDuration * 1000);
+          this.backgroundMusicTimeouts.push(timeout);
+        });
+
+        // Loop after melody completes (8 notes * 250ms = 2000ms)
+        const loopTimeout = setTimeout(() => playMelody(), 2000);
+        this.backgroundMusicTimeouts.push(loopTimeout);
+      };
+
+      playMelody();
+    } catch {}
+  }
+
+  stopBackgroundMusic() {
+    // Cancel all pending timeouts
+    this.backgroundMusicTimeouts.forEach((timeout) => clearTimeout(timeout));
+    this.backgroundMusicTimeouts = [];
+
+    if (this.backgroundMusicGain) {
+      try {
+        const ctx = this.getContext();
+        this.backgroundMusicGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+      } catch {}
+      this.backgroundMusicGain = null;
+    }
+    this.backgroundMusicOsc = null;
   }
 }
 

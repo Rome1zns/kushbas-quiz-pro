@@ -14,7 +14,140 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      answers: {
+        Row: {
+          created_at: string
+          id: string
+          player_id: string
+          question_id: string
+          score_earned: number
+          selected_option: number
+          time_taken_ms: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          player_id: string
+          question_id: string
+          score_earned?: number
+          selected_option: number
+          time_taken_ms: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          player_id?: string
+          question_id?: string
+          score_earned?: number
+          selected_option?: number
+          time_taken_ms?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answers_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      games: {
+        Row: {
+          created_at: string
+          current_question: number
+          id: string
+          pin: string
+          status: Database["public"]["Enums"]["game_status"]
+        }
+        Insert: {
+          created_at?: string
+          current_question?: number
+          id?: string
+          pin: string
+          status?: Database["public"]["Enums"]["game_status"]
+        }
+        Update: {
+          created_at?: string
+          current_question?: number
+          id?: string
+          pin?: string
+          status?: Database["public"]["Enums"]["game_status"]
+        }
+        Relationships: []
+      }
+      players: {
+        Row: {
+          game_id: string
+          id: string
+          joined_at: string
+          name: string
+          school: string
+          total_score: number
+        }
+        Insert: {
+          game_id: string
+          id?: string
+          joined_at?: string
+          name: string
+          school: string
+          total_score?: number
+        }
+        Update: {
+          game_id?: string
+          id?: string
+          joined_at?: string
+          name?: string
+          school?: string
+          total_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questions: {
+        Row: {
+          correct_answer: number
+          created_at: string
+          id: string
+          indicator: Database["public"]["Enums"]["quiz_indicator"]
+          options: Json
+          order_num: number
+          text_kk: string
+        }
+        Insert: {
+          correct_answer: number
+          created_at?: string
+          id?: string
+          indicator: Database["public"]["Enums"]["quiz_indicator"]
+          options: Json
+          order_num: number
+          text_kk: string
+        }
+        Update: {
+          correct_answer?: number
+          created_at?: string
+          id?: string
+          indicator?: Database["public"]["Enums"]["quiz_indicator"]
+          options?: Json
+          order_num?: number
+          text_kk?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +156,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      game_status: "lobby" | "active" | "showing_results" | "finished"
+      quiz_indicator:
+        | "strategic_thinking"
+        | "communication"
+        | "teamwork"
+        | "change_management"
+        | "feedback"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +289,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      game_status: ["lobby", "active", "showing_results", "finished"],
+      quiz_indicator: [
+        "strategic_thinking",
+        "communication",
+        "teamwork",
+        "change_management",
+        "feedback",
+      ],
+    },
   },
 } as const

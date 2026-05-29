@@ -1,5 +1,6 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "kushbas-quiz-pro",
+  "description": "Интерактивный live quiz для оценки лидерских компетенций",
   "private": true,
   "version": "0.0.0",
   "type": "module",
